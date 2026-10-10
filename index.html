@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="A poem for Tay, read clockwise around a garden clock.">
+<style>
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; font-size: 14px; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<title>A Garden in Your Grace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&family=IM+Fell+English:ital@0;1&family=Spectral:ital,wght@0,300;0,400;1,300;1,400&display=swap">
+<style>
+/* Layout: a 24-hour garden clock. Six parts of the day ring a dial (noon at top, midnight at bottom),
+   read clockwise from the title at lower left; collapses to one column on phones. */
+:root {
+  --bg: #EDF1E5;
+  --ink: #253125;
+  --muted: #6C7964;
+  --line: #B3BEA6;
+  --now: #E0E7D1;
+  --accent: #B8691A;
+  --day: #F5F7EE;
+  --night: #D7DECB;
+
+  --mg: #5A62B5; --mg-star: #9097D8; --mg-throat: #F4F2FB;
+  --sun: #E2B02C; --sun-2: #C68E17; --seed: #5A3C1F; --seed-2: #36230F;
+  --zin: #D1447A; --zin-2: #A42F5B; --zin-eye: #F0C14A;
+  --mari: #EA8B1D; --mari-2: #D06B11; --mari-3: #A84C0A;
+  --rose: #BC3450; --rose-2: #861D35;
+  --dah: #C65C8D; --dah-2: #A43F71; --dah-3: #7C2652;
+
+  --display: "IM Fell English", "Iowan Old Style", Georgia, serif;
+  --body: "Spectral", Georgia, "Times New Roman", serif;
+  --hand: "Caveat", "Segoe Print", "Bradley Hand", cursive;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121811; --ink: #E3E8D8; --muted: #97A48F; --line: #3A4839; --now: #1C261B;
+    --accent: #E6A04A; --day: #1A2219; --night: #0D120C;
+    --mg: #7179D0; --mg-star: #A8ADEA; --mg-throat: #E9E8F7;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121811; --ink: #E3E8D8; --muted: #97A48F; --line: #3A4839; --now: #1C261B;
+  --accent: #E6A04A; --day: #1A2219; --night: #0D120C;
+  --mg: #7179D0; --mg-star: #A8ADEA; --mg-throat: #E9E8F7;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body); }
+.page { padding-inline: 20px; padding-block: 40px 64px; }
+
+.garden {
+  position: relative;
+  max-width: 1260px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "late  noon   golden"
+    "dawn  dial   dusk"
+    "title ending night";
+  gap: 40px 44px;
+}
+.ring { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: visible; }
+.ring path.loop { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 1 7; stroke-linecap: round; }
+.ring path.arrow { fill: none; stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+.cell { position: relative; z-index: 1; min-width: 0; background: var(--bg); border-radius: 18px; padding: 22px 24px 24px; }
+.part { transition: background-color .5s ease; cursor: default; }
+.part.is-now { background: var(--now); }
+.part:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.part header { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.flower { width: 46px; height: 46px; flex: none; display: block; }
+.part h2 { font-family: var(--display); font-weight: 400; font-size: 1.65rem; line-height: 1.05; margin: 0; }
+.kind { margin: 3px 0 0; font-family: var(--display); font-style: italic; color: var(--muted); font-size: 1rem; }
+.now-tag { display: none; margin-left: auto; font-family: var(--hand); font-size: 1.3rem; color: var(--accent); white-space: nowrap; }
+.part.is-now .now-tag { display: inline; }
+
+.verse p { margin: 0; padding-left: 1.2em; text-indent: -1.2em; font-size: 1.02rem; line-height: 1.55; font-weight: 300; }
+
+.title-card { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
+.title-card h1 { font-family: var(--display); font-weight: 400; font-size: clamp(2.2rem, 3.3vw, 3.1rem); line-height: 1.02; margin: 0; text-wrap: balance; }
+.title-card .for { font-family: var(--hand); font-size: 2.1rem; color: var(--accent); margin: 0; line-height: 1; }
+.title-card .start { font-family: var(--hand); font-size: 1.3rem; color: var(--muted); margin: 10px 0 0; line-height: 1.2; }
+
+.dial-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: transparent; }
+.dial { width: min(100%, 310px); height: auto; display: block; }
+.dial .hand { transform-box: view-box; transform-origin: 150px 150px; transition: transform 1.1s cubic-bezier(.5, 0, .2, 1); }
+.dial-note { font-family: var(--hand); font-size: 1.2rem; color: var(--muted); margin: 0; text-align: center; }
+
+.ending { display: flex; flex-direction: column; justify-content: center; gap: 14px; }
+.bouquet { display: flex; gap: 6px; justify-content: center; }
+.bouquet .flower { width: 30px; height: 30px; }
+.ending .verse p { font-style: italic; font-size: 1.1rem; font-weight: 400; }
+
+@media (max-width: 979px) {
+  .garden { display: flex; flex-direction: column; gap: 22px; max-width: 34rem; }
+  .ring { display: none; }
+  .title-card { text-align: center; align-items: center; }
+  .title-card .start { display: none; }
+  .cell { padding: 18px 18px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dial .hand, .part { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<main class="page">
+  <div class="garden" id="garden">
+    <svg class="ring" id="ring" aria-hidden="true"></svg>
+
+    <div class="cell title-card" style="grid-area: title" data-ring="title">
+      <h1>A Garden in Your Grace</h1>
+      <p class="for">for Tay</p>
+      <p class="start">Start at dawn, just above,<br>and read clockwise.</p>
+    </div>
+
+    <div class="cell dial-cell" style="grid-area: dial">
+      <svg class="dial" id="dial" viewBox="0 0 300 300" role="img" aria-label="A 24-hour clock with noon at the top and midnight at the bottom. Each flower sits at its hour, and the hand shows the time right now."></svg>
+      <p class="dial-note">The hand keeps real time.<br>Tap or hover a part to move it.</p>
+    </div>
+
+    <section class="cell part" style="grid-area: dawn" data-ring="dawn" data-key="dawn" data-hour="6.5" tabindex="0" aria-labelledby="h-dawn">
+      <header><span class="flower" data-flower="morningglory"></span><div><h2 id="h-dawn">Dawn</h2><p class="kind">morning glory</p></div><span class="now-tag">right now</span></header>
+      <div class="verse">
+        <p>Morning glories open before anyone asks them to.</p>
+        <p>You are not a morning glory.</p>
+        <p>You are a tangle of blankets,</p>
+        <p>a hand swatting the alarm,</p>
+        <p>a grumble from somewhere under all that hair.</p>
+        <p>But wait long enough</p>
+        <p>and the smile comes anyway,</p>
+        <p>slow, sleepy, sweet,</p>
+        <p>climbing whatever part of me</p>
+        <p>is closest to the light.</p>
+        <p>And here’s what the morning glory never learned:</p>
+        <p>it closes by noon.</p>
+        <p>Yours stays open all day.</p>
+      </div>
+    </section>
+
+    <section class="cell part" style="grid-area: late" data-ring="late" data-key="late" data-hour="10" tabindex="0" aria-labelledby="h-late">
+      <header><span class="flower" data-flower="sunflower"></span><div><h2 id="h-late">Late Morning</h2><p class="kind">sunflower</p></div><span class="now-tag">right now</span></header>
+      <div class="verse">
+        <p>By the time you make it outside,</p>
+        <p>the dew is long gone, and you don’t care.</p>
+        <p>Knees in the dirt, hair tied back and coming loose,</p>
+        <p>gold and brown, the exact colors</p>
+        <p>of a sunflower’s face.</p>
+        <p>And you turn the way it turns,</p>
+        <p>toward whatever is alive and needs you:</p>
+        <p>the basil, the seedlings, the friend who called last night,</p>
+        <p>me.</p>
+      </div>
+    </section>
+
+    <section class="cell part" style="grid-area: noon" data-ring="noon" data-key="noon" data-hour="12" tabindex="0" aria-labelledby="h-noon">
+      <header><span class="flower" data-flower="zinnia"></span><div><h2 id="h-noon">Noon</h2><p class="kind">zinnia</p></div><span class="now-tag">right now</span></header>
+      <div class="verse">
+        <p>August burns the fields to rust,</p>
+        <p>and the zinnias don’t care.</p>
+        <p>They bloom on, faithful, as the true ones must.</p>
+        <p>That’s how you stay.</p>
+        <p>And your laugh is like that too,</p>
+        <p>color thrown hard against the gray,</p>
+        <p>loud and unbothered.</p>
+      </div>
+    </section>
+
+    <section class="cell part" style="grid-area: golden" data-ring="golden" data-key="golden" data-hour="17.5" tabindex="0" aria-labelledby="h-golden">
+      <header><span class="flower" data-flower="marigold"></span><div><h2 id="h-golden">Golden Hour</h2><p class="kind">marigold</p></div><span class="now-tag">right now</span></header>
+      <div class="verse">
+        <p>Gardeners plant marigolds along the border</p>
+        <p>to keep what’s tender safe.</p>
+        <p>You do that.</p>
+        <p>You stand around the ones you love like prayer,</p>
+        <p>a low gold fire,</p>
+        <p>holding the worries of the world at bay.</p>
+      </div>
+    </section>
+
+    <section class="cell part" style="grid-area: dusk" data-ring="dusk" data-key="dusk" data-hour="19.5" tabindex="0" aria-labelledby="h-dusk">
+      <header><span class="flower" data-flower="rose"></span><div><h2 id="h-dusk">Dusk</h2><p class="kind">rose</p></div><span class="now-tag">right now</span></header>
+      <div class="verse">
+        <p>Your hand finds mine on the walk back in,</p>
+        <p>and there it is, the rose of you:</p>
+        <p>soft, yes,</p>
+        <p>but with a steady will beneath it,</p>
+        <p>a little thorn</p>
+        <p>for anyone who’d hurt what’s yours,</p>
+        <p>and somehow that makes it sweeter.</p>
+      </div>
+    </section>
+
+    <section class="cell part" style="grid-area: night" data-ring="night" data-key="night" data-hour="22.5" tabindex="0" aria-labelledby="h-night">
+      <header><span class="flower" data-flower="dahlia"></span><div><h2 id="h-night">Night</h2><p class="kind">dahlia</p></div><span class="now-tag">right now</span></header>
+      <div class="verse">
+        <p>A dahlia is a hundred petals folded, row on row,</p>
+        <p>and that is the depth of you.</p>
+        <p>Even now, talking in the dark,</p>
+        <p>I find another layer new</p>
+        <p>and fall for that one too.</p>
+      </div>
+    </section>
+
+    <section class="cell ending" style="grid-area: ending" data-ring="ending" aria-label="Ending">
+      <div class="bouquet" aria-hidden="true">
+        <span class="flower" data-flower="morningglory"></span>
+        <span class="flower" data-flower="sunflower"></span>
+        <span class="flower" data-flower="zinnia"></span>
+        <span class="flower" data-flower="marigold"></span>
+        <span class="flower" data-flower="rose"></span>
+        <span class="flower" data-flower="dahlia"></span>
+      </div>
+      <div class="verse">
+        <p>So if they ask me where the flowers grow,</p>
+        <p>I’ll tell them there’s no need to search some place.</p>
+        <p>No meadow ever put on such a show</p>
+        <p>as this whole garden growing in your grace.</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+(function () {
+  // ---- Flowers: each drawn in a -50..50 box, told apart by shape as well as color ----
+  const f = (n) => n.toFixed(2);
+  function petals(n, rx, ry, d, color, rot = 0, edge) {
+    let s = '';
+    for (let i = 0; i < n; i++) {
+      s += `<ellipse cx="0" cy="${-d}" rx="${rx}" ry="${ry}" transform="rotate(${f(rot + i * 360 / n)})" style="fill:var(${color})${edge ? `;stroke:var(${edge});stroke-width:1.2` : ''}"/>`;
+    }
+    return s;
+  }
+  function bumps(n, r, d, color, rot = 0) {
+    let s = '';
+    for (let i = 0; i < n; i++) {
+      s += `<circle cx="0" cy="${-d}" r="${r}" transform="rotate(${f(rot + i * 360 / n)})" style="fill:var(${color});stroke:var(--mari-3);stroke-width:1"/>`;
+    }
+    return s;
+  }
+  function points(n, len, w, color, rot = 0) {
+    let s = '';
+    for (let i = 0; i < n; i++) {
+      s += `<path d="M0 0 Q${w} ${f(-len * 0.55)} 0 ${-len} Q${-w} ${f(-len * 0.55)} 0 0Z" transform="rotate(${f(rot + i * 360 / n)})" style="fill:var(${color});stroke:var(--dah-3);stroke-width:.8"/>`;
+    }
+    return s;
+  }
+  const FLOWERS = {
+    morningglory() {
+      let s = '<circle r="44" style="fill:var(--mg)"/>';
+      for (let i = 0; i < 5; i++) s += `<line x1="0" y1="0" x2="0" y2="-41" transform="rotate(${i * 72})" style="stroke:var(--mg-star);stroke-width:3;stroke-linecap:round"/>`;
+      return s + '<circle r="15" style="fill:var(--mg-throat)"/><circle r="5" style="fill:var(--zin-eye)"/>';
+    },
+    sunflower() {
+      let s = petals(20, 6.5, 17, 31, '--sun') + petals(20, 5.5, 13, 27, '--sun-2', 9) + '<circle r="21" style="fill:var(--seed)"/>';
+      [[7, 6], [14, 11]].forEach(([r, n]) => {
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2;
+          s += `<circle cx="${f(Math.cos(a) * r)}" cy="${f(Math.sin(a) * r)}" r="1.9" style="fill:var(--seed-2)"/>`;
+        }
+      });
+      return s;
+    },
+    zinnia() {
+      return petals(14, 9, 13, 30, '--zin') + petals(12, 8, 10, 19, '--zin-2', 15) +
+        '<circle r="9" style="fill:var(--zin-eye)"/><circle r="4.5" style="fill:var(--seed)"/>';
+    },
+    marigold() {
+      return bumps(13, 13, 31, '--mari') + bumps(10, 11, 19, '--mari-2', 18) + bumps(6, 8, 8, '--mari') +
+        '<circle r="6" style="fill:var(--mari-3)"/>';
+    },
+    rose() {
+      let s = petals(5, 22, 18, 24, '--rose', 0, '--rose-2') + '<circle r="30" style="fill:var(--rose)"/>';
+      let d = '';
+      for (let t = 0; t <= 12; t += 0.25) {
+        const r = 2 + 2.2 * t;
+        d += (t === 0 ? 'M' : 'L') + f(Math.cos(t) * r) + ' ' + f(Math.sin(t) * r) + ' ';
+      }
+      return s + `<path d="${d}" style="fill:none;stroke:var(--rose-2);stroke-width:3.2;stroke-linecap:round"/>`;
+    },
+    dahlia() {
+      return points(16, 46, 14, '--dah') + points(12, 34, 12, '--dah-2', 15) + points(8, 22, 10, '--dah-3', 22) +
+        '<circle r="4" style="fill:var(--zin-eye)"/>';
+    }
+  };
+  document.querySelectorAll('[data-flower]').forEach((el) => {
+    el.innerHTML = `<svg class="flower" viewBox="-50 -50 100 100" aria-hidden="true">${FLOWERS[el.dataset.flower]()}</svg>`;
+  });
+
+  // ---- Dial: 24 hours, noon at the top, read clockwise like the poem ----
+  const C = 150, R = 128;
+  const angleOf = (h) => ((h - 12) / 24) * 360;
+  const at = (h, r) => {
+    const a = (angleOf(h) * Math.PI) / 180;
+    return [C + r * Math.sin(a), C - r * Math.cos(a)];
+  };
+  const parts = [...document.querySelectorAll('.part')];
+  let svg = '';
+  svg += `<path d="M${C - R} ${C} A${R} ${R} 0 0 1 ${C + R} ${C} Z" style="fill:var(--day)"/>`;
+  svg += `<path d="M${C - R} ${C} A${R} ${R} 0 0 0 ${C + R} ${C} Z" style="fill:var(--night)"/>`;
+  svg += `<circle cx="${C}" cy="${C}" r="${R}" style="fill:none;stroke:var(--line);stroke-width:1.5"/>`;
+  for (let h = 0; h < 24; h++) {
+    const major = h % 6 === 0;
+    const [x1, y1] = at(h, R);
+    const [x2, y2] = at(h, R - (major ? 14 : 7));
+    svg += `<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" style="stroke:var(--muted);stroke-width:${major ? 1.8 : 1};stroke-linecap:round"/>`;
+  }
+  [[12, 'noon'], [18, '6 pm'], [0, 'midnight'], [6, '6 am']].forEach(([h, label]) => {
+    const [x, y] = at(h, 104);
+    svg += `<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="middle" style="fill:var(--muted);font-family:var(--display);font-style:italic;font-size:12px">${label}</text>`;
+  });
+  // the sleeping-in hours
+  const [mx, my] = at(0, 58);
+  svg += `<circle cx="${f(mx)}" cy="${f(my)}" r="9" style="fill:var(--muted)"/><circle cx="${f(mx + 4)}" cy="${f(my - 3)}" r="8" style="fill:var(--night)"/>`;
+  const [zx, zy] = at(3, 80);
+  svg += `<text x="${f(zx)}" y="${f(zy)}" text-anchor="middle" transform="rotate(-14 ${f(zx)} ${f(zy)})" style="fill:var(--muted);font-family:var(--hand);font-size:17px">z z z</text>`;
+  parts.forEach((p) => {
+    const [x, y] = at(+p.dataset.hour, 80);
+    const type = p.querySelector('[data-flower]').dataset.flower;
+    svg += `<g transform="translate(${f(x)} ${f(y)}) scale(0.29)">${FLOWERS[type]()}</g>`;
+  });
+  svg += `<g class="hand" id="hand"><line x1="${C}" y1="${C}" x2="${C}" y2="${C - 60}" style="stroke:var(--accent);stroke-width:3;stroke-linecap:round"/><circle cx="${C}" cy="${C - 64}" r="6" style="fill:var(--accent)"/></g>`;
+  svg += `<circle cx="${C}" cy="${C}" r="6" style="fill:var(--ink)"/>`;
+  document.getElementById('dial').innerHTML = svg;
+
+  // ---- The hand: real time by default, moves to whichever part you point at ----
+  const hand = document.getElementById('hand');
+  let current = null;
+  function point(h) {
+    const target = angleOf(h);
+    if (current === null) current = target;
+    else current += ((((target - current) % 360) + 540) % 360) - 180;
+    hand.style.transform = `rotate(${current}deg)`;
+  }
+  const nowHour = () => { const d = new Date(); return d.getHours() + d.getMinutes() / 60; };
+  function keyFor(h) {
+    if (h >= 5 && h < 9.5) return 'dawn';
+    if (h >= 9.5 && h < 12) return 'late';
+    if (h >= 12 && h < 16) return 'noon';
+    if (h >= 16 && h < 19) return 'golden';
+    if (h >= 19 && h < 21) return 'dusk';
+    return 'night';
+  }
+  let held = null;
+  function tick() {
+    const h = nowHour(), key = keyFor(h);
+    parts.forEach((p) => p.classList.toggle('is-now', p.dataset.key === key));
+    if (!held) point(h);
+  }
+  const prevTransition = hand.style.transition;
+  hand.style.transition = 'none';
+  tick();
+  requestAnimationFrame(() => requestAnimationFrame(() => { hand.style.transition = prevTransition; }));
+  setInterval(tick, 60000);
+  parts.forEach((p) => {
+    const hold = () => { held = p; point(+p.dataset.hour); };
+    const release = () => { if (held === p) { held = null; point(nowHour()); } };
+    p.addEventListener('mouseenter', hold);
+    p.addEventListener('focus', hold);
+    p.addEventListener('mouseleave', release);
+    p.addEventListener('blur', release);
+  });
+
+  // ---- The dotted loop that carries the eye clockwise around the page ----
+  const garden = document.getElementById('garden');
+  const ring = document.getElementById('ring');
+  const ORDER = ['title', 'dawn', 'late', 'noon', 'golden', 'dusk', 'night', 'ending'];
+  function drawRing() {
+    if (getComputedStyle(garden).display !== 'grid') { ring.innerHTML = ''; return; }
+    const box = garden.getBoundingClientRect();
+    ring.setAttribute('viewBox', `0 0 ${f(box.width)} ${f(box.height)}`);
+    const P = ORDER.map((k) => {
+      const r = garden.querySelector(`[data-ring="${k}"]`).getBoundingClientRect();
+      return [r.left - box.left + r.width / 2, r.top - box.top + r.height / 2];
+    });
+    const n = P.length;
+    let d = `M${f(P[0][0])} ${f(P[0][1])}`;
+    let arrows = '';
+    for (let i = 0; i < n; i++) {
+      const p0 = P[(i - 1 + n) % n], p1 = P[i], p2 = P[(i + 1) % n], p3 = P[(i + 2) % n];
+      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+      d += ` C${f(c1[0])} ${f(c1[1])} ${f(c2[0])} ${f(c2[1])} ${f(p2[0])} ${f(p2[1])}`;
+      const mx = (p1[0] + 3 * c1[0] + 3 * c2[0] + p2[0]) / 8;
+      const my = (p1[1] + 3 * c1[1] + 3 * c2[1] + p2[1]) / 8;
+      const ang = Math.atan2(p2[1] + c2[1] - c1[1] - p1[1], p2[0] + c2[0] - c1[0] - p1[0]) * 180 / Math.PI;
+      arrows += `<path class="arrow" d="M-5 -6 L3 0 L-5 6" transform="translate(${f(mx)} ${f(my)}) rotate(${f(ang)})"/>`;
+    }
+    ring.innerHTML = `<path class="loop" d="${d}"/>${arrows}`;
+  }
+  if ('ResizeObserver' in window) new ResizeObserver(drawRing).observe(garden);
+  window.addEventListener('resize', drawRing);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawRing);
+  drawRing();
+})();
+</script>
+</body>
+</html>
